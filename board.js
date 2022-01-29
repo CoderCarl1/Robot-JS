@@ -1,60 +1,53 @@
-module.exports = class Board {
+class Board {
   constructor() {
     this.spaces = this.createBlankBoard();
     this.robots = new Set();
-    this.activeRobot = "Robot 1";
+    // this.activeRobot = "Robot 1";
   }
 
   createBlankBoard() {
-    const mapInput = [
-      ["4", [null]],
-      ["3", [null]],
-      ["2", [null]],
-      ["1", [null]],
-      ["0", [null]],
-    ];
-    let spaces = new Map(mapInput);
-    for (let i = 4; i >= 0; i--) {
-      spaces.set(`${i}`, new Map(mapInput));
+    let spaces = {}
+   
+    for (let i = 0; i < 5; i++) {
+      spaces[`${i}`] = Array(5).fill([])
     }
+
     return spaces;
   }
 
   displaySpaces() {
-    for (const row of this.spaces) {
-      for (const col of row) {
-        console.log(col);
-      }
-    }
+    console.log(this.spaces)
   }
 
   placeRobot(x, y, robot) {
-    // check valid & ignore if not
-    if (x == undefined || y == undefined || robot == undefined) return;
-    if (!this.checkValidMove(x, y)) return;
-    // remove robot if it exists
+    if (x == undefined || y == undefined || robot == undefined) return false;
+    if (!this.checkValidMove(x, y)) return false;
     if (robot.placed) {
-      console.log("INSIDE THE IF");
-      let currLocation = { x: robot.posX, y: robot.posY };
-      let currRow = this.spaces.get(`${currLocation.y}`);
-      console.log("1", { currRow });
-      let currArr = currRow.get(`${currLocation.x}`);
-      console.log("2", { currRow });
-      currArr = currArr.filter((el) => el !== robot.name || Boolean(el));
-      currRow.set(`${currLocation.x}`, currArr);
-      console.log("3", { currRow });
+      this.removeRobot(robot)
     }
 
-    // set robot
-    let row = this.spaces.get(`${y}`);
-    let robotArr = row.get(`${x}`);
-
+    let row = this.spaces[`${y}`];
+    let robotArr = [...row[x]];
+    
     robotArr.push(robot.name);
-    robotArr = robotArr.filter(Boolean);
-    row.set(`${x}`, robotArr);
+    row[x] = robotArr.filter(Boolean);
+    
 
-    // add to existing Set.
+    this.spaces[`${y}`] = row
+    
     this.robots.add(robot);
+
+  }
+
+  removeRobot(robot){
+    let row = this.spaces[`${robot.posY}`];
+    let robotArr = [...row[robot.posX]];
+
+    robotArr = robotArr.filter((el) => el !== robot.name);
+    row[robot.posX] = robotArr;
+
+    this.spaces[`${robot.posY}`] = row;
+ 
   }
 
   checkValidMove(x, y) {
@@ -69,3 +62,7 @@ module.exports = class Board {
     return true;
   }
 };
+
+const BOARD = new Board;
+
+module.exports = BOARD;

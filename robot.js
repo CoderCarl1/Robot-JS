@@ -1,3 +1,5 @@
+const colors = require("colors/safe");
+
 module.exports = class Robot {
   static count = 0;
 
@@ -8,37 +10,57 @@ module.exports = class Robot {
     this.posX;
     this.posY;
     this.placed = false;
-    this.direction = new Map([
-      ["NORTH", false],
-      ["SOUTH", false],
-      ["EAST", false],
-      ["WEST", false],
-    ]);
+    this.direction;
     this.board = board;
   }
 
-  placeRobot(x, y) {
-    if (this.checkValidMove(x, y)) {
-      // this.board.placeRobot(x, y, this);
-      this.setNewPos(x, y);
-      console.log("placed?? ", this.placed);
-      this.placed = true;
+  placeRobot(x, y, direction) {
+    if (this.placed) {
+      console.log(colors.red('ROBOT PLACED ALREADY'));
+      return;
     }
+
+      this.setNewPos(x, y);
+      this.placed = true;
+      this.direction = direction;
+      this.getCurrentPos();
+  }
+
+  moveRobot(){
+    let newY = this.posY;
+    let newX = this.posX;
+
+    switch(true){
+      case this.direction === 'NORTH':
+        newY = this.posY + 1
+        break;
+      case this.direction === 'SOUTH':
+        newY = this.posY - 1
+        break;
+      case this.direction === 'EAST':
+        newX = this.posX + 1
+        break;
+      case this.direction === 'WEST':
+        newX = this.posX - 1
+        break;
+    }
+
+    this.setNewPos(newX, newY);
+
   }
 
   getCurrentPos() {
-    console.log(`${this.name} placed on ROW: ${this.posY}, COL:${this.posX}`);
-    return { x: this.posX, y: this.posY };
+    console.log(colors.yellow(`${this.posX},${this.posY},${this.direction}`));
   }
 
   setNewPos(x, y) {
     if (this.checkValidMove(x, y)) {
+      this.board.placeRobot(x, y, this);
       this.posX = x;
       this.posY = y;
-      this.board.placeRobot(x, y, this);
       // return;
     } else {
-      console.log("The move would have gone off the table, it was ignored");
+      console.log(colors.red("MOVE IGNORED: The robot would have gone off the table"));
     }
   }
 
@@ -46,15 +68,20 @@ module.exports = class Robot {
     return this.board.checkValidMove(x, y);
   }
 
-  moveSelect({ move, commands = null }) {
-    console.log("move", move);
-    console.log("commands", commands);
-    if (move === "PLACE" && commands) {
-      const commandsArr = commands.split(",");
-      const [x, y, direction] = commandsArr;
-
-      this.setCurrentPos(x, y);
-      this.direction.set(direction, true);
+  rotate(rotation){
+    switch(this.direction){
+      case "NORTH":
+        this.direction = rotation === -1 ? 'WEST' : 'EAST';
+        break;
+      case "SOUTH":
+        this.direction = rotation === -1 ? 'EAST' : 'WEST';
+        break;
+      case "EAST":
+        this.direction = rotation === -1 ? 'NORTH' : 'SOUTH';
+        break;
+      case "WEST":
+        this.direction = rotation === -1 ? 'SOUTH' : 'NORTH';
+        break;
     }
   }
 };

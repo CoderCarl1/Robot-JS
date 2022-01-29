@@ -1,14 +1,22 @@
 const prompt = require("prompt");
+const colors = require("colors/safe");
+const Robot = require("./robot");
+const BOARD = require("./board");
+
+prompt.delimiter = colors.green("-> ");
 
 function startPrompt() {
   prompt.get(
     {
-      description: `Do you want to start a new game?
+      description: colors.magenta(`
+
+      Do you want to start a new game?
       ---------------------------
       |  YES => Start a new game |
       |  NO / Exit => End game   |
       ---------------------------
-      `,
+
+      `),
       type: "string",
       message: "Please type one of the options, followed by the ENTER key",
       pattern: /yes|no|exit/i,
@@ -18,17 +26,52 @@ function startPrompt() {
       },
     },
     (err, result) => {
-      console.log({ err });
+      
       if (result.question.includes("YES")) {
-        return InputPrompt();
+        return firstInputPrompt();
       }
       if (result.question.includes("NO") || result.question.includes("EXIT")) {
-        console.log(`ENDING GAME.. 
+        console.log(colors.red(`ENDING GAME.. 
         POWERING.. 
-        DOWWWWWN...`);
-        return null;
+        DOWWWWWN...`));
+        prompt.stop();
+        return;
       }
       return startPrompt();
+    }
+  );
+}
+
+function firstInputPrompt() {
+  prompt.get(
+    {
+      description: colors.magenta(`
+
+      Place your first Robot
+      -----------------------------------------------
+    | 1: X,Y,Direction                               |
+    | valid x & y input is a single digit number     |
+    | valid direcions are: NORTH , SOUTH, EAST, WEST |
+    | SEPERATE ALL VALUES WITH A COMMA               |
+    -------------------------------------------------
+
+    `),
+      type: "string",
+      message: "Please enter, followed by the ENTER key",
+      pattern: /\d,\d,\w+/i,
+      required: true,
+      before: function (value) {
+        return value.trim().toUpperCase();
+      },
+    },
+    (err, result) => {
+      console.log('HERE =>',{result});
+      const { question } = result;
+    
+      processInput("PLACE " + question);
+
+      return InputPrompt()
+      
     }
   );
 }
@@ -36,50 +79,86 @@ function startPrompt() {
 function InputPrompt() {
   prompt.get(
     {
-      description: `ENTER YOUR MOVE
-    ---------------------------
-    | valid moves include:     |
-    | 1: PLACE <X,Y,Direction> |
-    | 2: MOVE                  |
-    | 3: REPORT                |
-    | 4: ROBOT <number>        |
-    ---------------------------
-    `,
+      description: colors.magenta(`
+
+      ENTER YOUR MOVE
+    --------------------------------
+    | valid moves include:          |
+    | 1: PLACE <X,Y,Direction>      |
+    | 2: MOVE                       |
+    | 3: LEFT or RIGHT              |
+    |  - this will rotate the robot |
+    |                               |
+    | 4: REPORT                     |
+    | 5: LIST                       |
+    | - This lists all ROBOTS       |
+    | 6: ROBOT <number>             |
+    | - This sets the active Robot  |
+    --------------------------------
+
+    `),
       type: "string",
       message: "Please type one of the options, followed by the ENTER key",
-      pattern: /place |move|report|robot/i,
+      pattern: /place|move|report|robot/i,
       required: true,
       before: function (value) {
         return value.trim().toUpperCase();
       },
     },
     (err, result) => {
-      console.log({ result });
+      
       const { question } = result;
-      switch (true) {
-        case question.includes("PLACE"):
-          const placement = result.question.split(" ")[1].split(",");
+      
+      processInput(question);
 
-          console.log("robot placed at", { placement });
-          break;
-        case question.includes("MOVE"):
-          console.log("moved forward one space");
-          break;
-        case question.includes("REPORT"):
-          // code block
-          console.log("reporting");
-          break;
-        case question.includes("ROBOT"):
-          console.log("not added just yet, ma bad");
-          break;
-        default:
-          console.log("default");
-        // code block
-      }
-
-      return "wooo";
+      return InputPrompt()
+      
     }
   );
 }
 
-module.exports = { startPrompt, InputPrompt };
+const ROBOTS = {}
+let ACTIVE_ROBOT;
+
+function processInput(input){
+
+  switch (true) {
+    case input.includes("PLACE"):
+      const placement = input.split(" ")[1].split(",");
+      const [x, y, direction] = placement;
+      const ROBOT = new Robot(BOARD)
+      ROBOTS[ROBOT.name] = ROBOT
+      ACTIVE_ROBOT = ROBOT
+      ACTIVE_ROBOT.placeRobot(Number(x), Number(y), direction);
+      console.log(colors.cyan('Your ROBOT was placed at:'), colors.yellow(input));
+
+      break;
+    case input.includes("MOVE"):
+      ACTIVE_ROBOT.moveRobot()
+
+      console.log(colors.cyan("moved forward one space"));
+      break;
+    case input.includes("REPORT"):
+      ACTIVE_ROBOT.getCurrentPos()
+      break;
+    case input.includes("LEFT"):
+      ACTIVE_ROBOT.rotate(-1)
+      console.log(colors.cyan('ROBOT turned 90 degrees anti-clockwise'));
+      break;
+    case input.includes("RIGHT"):
+      ACTIVE_ROBOT.rotate(1)
+      console.log(colors.cyan('ROBOT turned 90 degrees clockwise'));
+      break;
+    case input.includes('LIST'):
+
+      break;
+    case input.includes("ROBOT"):
+      BOARD.activeRobot = input;
+      ACTIVE_ROBOT = ROBOTS[ROBOT.name];
+      console.log(colors.cyan('NOW CONTROLLING :', ACTIVE_ROBOT));
+      break;
+    
+  }
+}
+
+module.exports = { startPrompt, InputPrompt, processInput, ACTIVE_ROBOT, ROBOTS };
