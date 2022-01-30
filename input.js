@@ -53,21 +53,29 @@ function firstInputPrompt() {
     | valid x & y input is a single digit number     |
     | valid direcions are: NORTH , SOUTH, EAST, WEST |
     | SEPERATE ALL VALUES WITH A COMMA               |
+    |                                                |
+    | 2. EXIT                                        |
     -------------------------------------------------
 
     `),
       type: "string",
       message: "Please enter, followed by the ENTER key",
-      pattern: /\d,\d,\w+/i,
+      pattern: /\d,\d,\w+|exit/ig,
       required: true,
       before: function (value) {
         return value.trim().toUpperCase();
       },
     },
     (err, result) => {
-      console.log('HERE =>',{result});
       const { question } = result;
-    
+      if (question.includes("EXIT")){
+
+        console.log(colors.red(`ENDING GAME.. 
+        POWERING.. 
+        DOWWWWWN...`));
+        prompt.stop();
+        return;
+      }
       processInput("PLACE " + question);
 
       return InputPrompt()
@@ -94,12 +102,13 @@ function InputPrompt() {
     | - This lists all ROBOTS       |
     | 6: ROBOT <number>             |
     | - This sets the active Robot  |
+    | 7. EXIT                       |
     --------------------------------
 
     `),
       type: "string",
       message: "Please type one of the options, followed by the ENTER key",
-      pattern: /place|move|report|robot/i,
+      pattern: /place|move|report|robot|left|right|exit/i,
       required: true,
       before: function (value) {
         return value.trim().toUpperCase();
@@ -108,7 +117,14 @@ function InputPrompt() {
     (err, result) => {
       
       const { question } = result;
-      
+      if (question.includes("EXIT")){
+
+        console.log(colors.red(`ENDING GAME.. 
+        POWERING.. 
+        DOWWWWWN...`));
+        prompt.stop();
+        return;
+      }
       processInput(question);
 
       return InputPrompt()
@@ -144,6 +160,7 @@ function processInput(input){
     case input.includes("LEFT"):
       ACTIVE_ROBOT.rotate(-1)
       console.log(colors.cyan('ROBOT turned 90 degrees anti-clockwise'));
+      console.log(colors.yellow('ROBOT now facing', ACTIVE_ROBOT.direction));
       break;
     case input.includes("RIGHT"):
       ACTIVE_ROBOT.rotate(1)
@@ -157,7 +174,7 @@ function processInput(input){
       ACTIVE_ROBOT = ROBOTS[ROBOT.name];
       console.log(colors.cyan('NOW CONTROLLING :', ACTIVE_ROBOT));
       break;
-    
+   
   }
 }
 

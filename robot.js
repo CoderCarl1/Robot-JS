@@ -23,7 +23,7 @@ module.exports = class Robot {
       this.setNewPos(x, y);
       this.placed = true;
       this.direction = direction;
-      this.getCurrentPos();
+      // this.getCurrentPos();
   }
 
   moveRobot(){
